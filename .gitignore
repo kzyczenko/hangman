@@ -1,0 +1,53 @@
+# --- Podstawowe pliki kompilacji C ---
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# Pliki wykonywalne / binarki
+a.out
+a.exe
+*.out
+*.elf
+
+# Pliki debugowania / profilowania
+*.dSYM/
+*.stackdump
+gmon.out
+vgcore.*
+core
+core.*
+
+# Pliki tymczasowe edytorów
+*~
+*.swp
+*.swo
+*.tmp
+*.bak
+*.BAK
+
+# Pliki generowane przez narzędzia build
+/build/
+/bin/
+/obj/
+/dist/
+/Debug/
+/Release/
+/cmake-build-*/
+
+# CMake / Make / inne
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile.in
+*.make
+.DS_Store
+# --- Katalogi, których NIE chcesz pchać do repo ---
+.vscode/
+godlib/
+libcmini/
