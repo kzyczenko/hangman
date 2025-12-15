@@ -24,26 +24,39 @@
 #define JOY_RIGHT   0x08
 #define JOY_FIRE    0x80
 
+
 /* ###################################################################################
 #  DATA
 ################################################################################### */
 
 static U8 gInputDelay = 0;
 
-/* Mapowanie scancodes na litery */
-static const char gScanToChar[] = {
-    0,   0,   '1', '2', '3', '4', '5', '6',  /* 0x00-0x07 */
-    '7', '8', '9', '0', '-', '=', 0,   0,    /* 0x08-0x0F */
-    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',  /* 0x10-0x17 */
-    'O', 'P', '[', ']', 0,   0,   'A', 'S',  /* 0x18-0x1F */
-    'D', 'F', 'G', 'H', 'J', 'K', 'L', ';',  /* 0x20-0x27 */
-    '\'', '`', 0,  '\\', 'Z', 'X', 'C', 'V', /* 0x28-0x2F */
-    'B', 'N', 'M', ',', '.', '/', 0,   '*',  /* 0x30-0x37 */
-};
-
 /* ###################################################################################
 #  CODE
 ################################################################################### */
+
+/* Mapa: ascii letter (zamieniona na wielką) -> ISO-8859-2 kod (w hex) */
+static U8 map_polish_iso8859_2_upper(U8 baseChar)
+{
+    /* zamień małą literę na wielką, jeśli potrzeba */
+    if (baseChar >= 'a' && baseChar <= 'z') {
+        baseChar = (U8)(baseChar - ('a' - 'A'));
+    }
+
+    switch (baseChar) {
+        case 'A': return 0xA1; /* Ą */
+        case 'C': return 0xC6; /* Ć */
+        case 'E': return 0xCA; /* Ę */
+        case 'L': return 0xA3; /* Ł */
+        case 'N': return 0xD1; /* Ń */
+        case 'O': return 0xD3; /* Ó */
+        case 'S': return 0xA6; /* Ś */
+        /* rozróżnienie Ź/Ż: mapuję Z->Ż (AF), X->Ź (AC) - możesz zmienić */
+        case 'Z': return 0xAF; /* Ż */
+        case 'X': return 0xAC; /* Ź (alternatywnie mapuj Z/X według preferencji) */
+        default:  return 0;    /* brak mapowania */
+    }
+}
 
 /*-----------------------------------------------------------------------------------*
  * FUNCTION :  Input_Init
@@ -187,12 +200,14 @@ U8 GameInput(void)
         }
 
         /* Litery - konwersja scancode na ASCII */
-        if (lKey < sizeof(gScanToChar)) {
-            char lChar = gScanToChar[lKey];
-            if (lChar >= 'A' && lChar <= 'Z') {
-                return (U8)lChar;
+        U8 lChar = IKBD_ConvertScancodeAsciiCaps(lKey);
+        if (IKBD_GetKeyStatus(eIKBDSCAN_CONTROL) & 0x80) {
+            U8 mapped = map_polish_iso8859_2_upper(lChar);
+            if (mapped != 0) {
+                return mapped; /* zwracamy ISO-8859-2 bajt wielkiego polskiego znaku */
             }
         }
+        return (U8)lChar;
     }
 
     /* Sprawdz joystick 1 */

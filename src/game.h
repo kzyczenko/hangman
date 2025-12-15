@@ -49,7 +49,7 @@ typedef struct sGameState {
     U8   mUsed[GAME_MAX_ALPHABET];           /* Ktore litery uzyte */
     U8   mMisses;                            /* Liczba bledow */
     U8   mGuesses;                           /* Liczba prob */
-    S8   mSelectedLetter;                    /* Aktualnie wybrana litera */
+    U8   mSelectedLetter;                    /* Aktualnie wybrana litera */
     U8   mAlphabetLen;                       /* Dlugosc alfabetu */
     U8   mAlphabetCols;                      /* Kolumny w alfabecie */
     U8   mBoardSize;                         /* Rozmiar planszy (rows * cols) */
@@ -72,7 +72,7 @@ void MoveCursor(U8 aDirection);
 U8   HasWon(void);
 U8   HasLost(void);
 void RevealAnswer(void);
-S8   FindLetterIndex(char aChar);
+S16   FindLetterIndex(char aChar);
 
 /* ################################################################################ */
 

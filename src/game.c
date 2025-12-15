@@ -209,7 +209,7 @@ void RevealAnswer(void)
  * RETURNS  : Indeks lub -1 jeśli nie znaleziono
  *-----------------------------------------------------------------------------------*/
 
-S8 FindLetterIndex(char aChar)
+S16 FindLetterIndex(char aChar)
 {
     U8 i;
     
@@ -220,7 +220,7 @@ S8 FindLetterIndex(char aChar)
     
     for (i = 0; i < gGame.mAlphabetLen; i++) {
         if (gGame.mAlphabet[i] == aChar) {
-            return (S8)i;
+            return (S16)i;
         }
     }
     return -1;

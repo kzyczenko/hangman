@@ -285,7 +285,7 @@ void GameScreen_Run(void)
     U8 lWin = 0;
     U16 lPromptTimer = PROMPT_REFRESH;
 
-    const char* message = gMessages[eMSG_PROMPT].mStrings[0];
+    char* message = gMessages[eMSG_PROMPT].mStrings[0];
 
     gApp.mCurrentScreen = eSCREEN_GAME;
 
@@ -297,12 +297,12 @@ void GameScreen_Run(void)
         IKBD_Update();
         Input_Update();
 
+        lInput = GameInput();
+
         if (lRedraw) {
             DrawGame(message);
             lRedraw = 0;
         }
-
-        lInput = GameInput();
 
         if (lInput == eINPUT_QUIT) {
             gApp.mQuit = 1;
@@ -336,7 +336,7 @@ void GameScreen_Run(void)
             /* lResult == eGUESS_ALREADY_USED - nic nie rob */
             lRedraw = 1;
         }
-        else if (lInput >= 'A' && lInput <= 'Z') {
+        else if (lInput >= 'A' && lInput <= 255) {
             /* Bezposrednie wcisniecie litery */
             S8 lLetterIndex = FindLetterIndex((char)lInput);
             if (lLetterIndex >= 0) {
@@ -371,6 +371,7 @@ void GameScreen_Run(void)
             lRedraw = 1;
             lPromptTimer = PROMPT_REFRESH;
         }
+
     }
 
     /* Koniec rundy */
