@@ -69,11 +69,11 @@ void Input_Update(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Input_GetMenu
+ * FUNCTION : MenuInput
  * ACTION   : Pobierz wejscie dla menu
  *-----------------------------------------------------------------------------------*/
 
-U8 Input_GetMenu(void)
+U8 MenuInput(void)
 {
     U8 lKey;
     U8 lJoy;
@@ -142,11 +142,11 @@ U8 Input_GetMenu(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION :  Input_GetGame
+ * FUNCTION :  GameInput
  * ACTION   : Pobierz wejscie dla gry (z obsluga liter)
  *-----------------------------------------------------------------------------------*/
 
-U8 Input_GetGame(void)
+U8 GameInput(void)
 {
     U8 lKey;
     U8 lJoy;
@@ -224,11 +224,11 @@ U8 Input_GetGame(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Input_WaitForAny
+ * FUNCTION : WaitForAny
  * ACTION   : Czekaj na dowolny klawisz/przycisk
  *-----------------------------------------------------------------------------------*/
 
-void Input_WaitForAny(void)
+void WaitForAny(void)
 {
     U8 lJoy;
     

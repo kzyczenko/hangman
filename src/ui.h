@@ -27,15 +27,14 @@ extern sAppState gApp;
 #  PROTOTYPES
 ################################################################################### */
 
-void UI_ClearScreen(void);
-void UI_DrawStatus(const char* apText);
-void UI_DrawTitle(void);
-void UI_DrawMenu(U8 aSelectedOption);
-void UI_DrawGame(const char* apText);
-void UI_DrawGameContent(const char* apText);
-void UI_UpdateCursor(void);
-void UI_ShowMessage(const char* apMessage);
-void UI_ShowEndScreen(U8 aWin);
+void ClearScreen(void);
+void DrawStatus(const char* apText);
+void DrawTitle(void);
+void DrawMenu(U8 aSelectedOption);
+void DrawGame(const char* apText);
+void DrawGameContent(const char* apText);
+void UpdateCursor(void);
+void ShowEndScreen(U8 aWin);
 
 /* ################################################################################ */
 

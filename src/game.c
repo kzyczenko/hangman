@@ -29,9 +29,9 @@ sGameState gGame;
 void Game_Init(void)
 {
     /* Pobierz alfabet ze słownika */
-    const char* lpAlphabet = Dict_GetAlphabet();
+    const char* lpAlphabet = GetAlphabet();
     String_StrCpy(gGame.mAlphabet, lpAlphabet);
-    gGame.mAlphabetLen = Dict_GetAlphabetLen();
+    gGame.mAlphabetLen = GetAlphabetLen();
     
     /* Ustaw liczbę kolumn w zależności od długości alfabetu */
     if (gGame.mAlphabetLen > 36) {
@@ -46,11 +46,11 @@ void Game_Init(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Game_InitRound
+ * FUNCTION : InitRound
  * ACTION   : Inicjalizacja nowej rundy
  *-----------------------------------------------------------------------------------*/
 
-void Game_InitRound(void)
+void InitRound(void)
 {
     U8 i;
     U8 lLen;
@@ -66,8 +66,8 @@ void Game_InitRound(void)
     }
     
     /* Załaduj nowy blok słów i pobierz losowe słowo */
-    Dict_LoadRandomBlock();
-    Dict_GetRandomWord(gGame.mSecret);
+    LoadRandomBlock();
+    GetRandomWord(gGame.mSecret);
     
     /* Przygotuj odpowiedź (same podkreślniki) */
     lLen = String_StrLen(gGame.mSecret);
@@ -78,12 +78,12 @@ void Game_InitRound(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Game_GuessLetter
+ * FUNCTION : GuessLetter
  * ACTION   : Zgadnij aktualnie wybraną literę
  * RETURNS  : eGUESS_CORRECT, eGUESS_WRONG lub eGUESS_ALREADY_USED
  *-----------------------------------------------------------------------------------*/
 
-U8 Game_GuessLetter(void)
+U8 GuessLetter(void)
 {
     char lChar;
     U8 i;
@@ -121,11 +121,11 @@ U8 Game_GuessLetter(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Game_MoveCursor
+ * FUNCTION : MoveCursor
  * ACTION   :  Przesuń kursor w podanym kierunku
  *-----------------------------------------------------------------------------------*/
 
-void Game_MoveCursor(U8 aDirection)
+void MoveCursor(U8 aDirection)
 {
     S8 lNewPos = gGame.mSelectedLetter;
     
@@ -166,11 +166,11 @@ void Game_MoveCursor(U8 aDirection)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Game_HasWon
+ * FUNCTION : HasWon
  * ACTION   :  Sprawdź czy gracz wygrał
  *-----------------------------------------------------------------------------------*/
 
-U8 Game_HasWon(void)
+U8 HasWon(void)
 {
     U8 i;
     U8 lLen = String_StrLen(gGame.mAnswer);
@@ -184,32 +184,32 @@ U8 Game_HasWon(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Game_HasLost
+ * FUNCTION : HasLost
  * ACTION   : Sprawdź czy gracz przegrał
  *-----------------------------------------------------------------------------------*/
 
-U8 Game_HasLost(void)
+U8 HasLost(void)
 {
     return (gGame.mMisses >= GAME_MAX_MISSES);
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Game_RevealAnswer
+ * FUNCTION : RevealAnswer
  * ACTION   : Odkryj odpowiedź (po przegranej)
  *-----------------------------------------------------------------------------------*/
 
-void Game_RevealAnswer(void)
+void RevealAnswer(void)
 {
     String_StrCpy(gGame.mAnswer, gGame.mSecret);
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Game_FindLetterIndex
+ * FUNCTION : FindLetterIndex
  * ACTION   : Znajdź indeks litery w alfabecie
  * RETURNS  : Indeks lub -1 jeśli nie znaleziono
  *-----------------------------------------------------------------------------------*/
 
-S8 Game_FindLetterIndex(char aChar)
+S8 FindLetterIndex(char aChar)
 {
     U8 i;
     

@@ -44,11 +44,11 @@ sAppState gApp;
 ################################################################################### */
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION :  UI_PrintAt
+ * FUNCTION :  PrintAt
  * ACTION   : Wypisz tekst na AKTUALNYM URZADZENIU LOGICZNYM
  *-----------------------------------------------------------------------------------*/
 
-static void UI_PrintAt(const char* apText, U8 aX, U8 aY)
+static void PrintAt(const char* apText, U8 aX, U8 aY)
 {
     Font8x8_Print(apText, Screen_GetpLogic(), aX * CHAR_WIDTH, aY * CHAR_HEIGHT);
 }
@@ -58,39 +58,44 @@ static void UI_PrintAt(const char* apText, U8 aX, U8 aY)
 ################################################################################### */
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_ClearScreen
+ * FUNCTION : ClearScreen
  * ACTION   :  Wyczysc OBA ekrany
  *-----------------------------------------------------------------------------------*/
 
-void UI_ClearScreen(void)
+void ClearScreen(void)
 {
     Screen_Logic_ClearScreen();
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_DrawTitle
+ * FUNCTION : DrawTitle
  * ACTION   : Rysuj tytul na obu buforach
  *-----------------------------------------------------------------------------------*/
 
-void UI_DrawStatus(const char* apText)
+void DrawStatus(const char* apText)
 {
-    UI_PrintAt(apText, 0, STATUS_Y);
+    U8 lLen;
+    U8 lX;
+
+    lLen = String_StrLen(apText);
+    lX = (SCREEN_CHARS_X - lLen) / 2;
+    PrintAt(apText, lX, STATUS_Y);
 }
 
-void UI_DrawTitle(void)
+void DrawTitle(void)
 {
-    UI_PrintAt("================================", 4, 2);
-    UI_PrintAt("         H A N G M A N          ", 4, 4);
-    UI_PrintAt("         ATARI ST PORT          ", 4, 6);
-    UI_PrintAt("================================", 4, 8);
+    PrintAt("================================", 4, 2);
+    PrintAt("         H A N G M A N          ", 4, 4);
+    PrintAt("         ATARI ST PORT          ", 4, 6);
+    PrintAt("================================", 4, 8);
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_DrawMenu
+ * FUNCTION : DrawMenu
  * ACTION   : Rysuj menu z zaznaczona opcja
  *-----------------------------------------------------------------------------------*/
 
-void UI_DrawMenu(U8 aSelectedOption)
+void DrawMenu(U8 aSelectedOption)
 {
     U8 i, len;
     char tmpStr[50];
@@ -128,28 +133,28 @@ void UI_DrawMenu(U8 aSelectedOption)
         }
 
         if (i == aSelectedOption) {
-            UI_PrintAt(">>", 5, lY);
-            UI_PrintAt(tmpStr, 8, lY);
-            UI_PrintAt("<<", 30, lY);
+            PrintAt(">>", 5, lY);
+            PrintAt(tmpStr, 8, lY);
+            PrintAt("<<", 30, lY);
         }
         else {
-            UI_PrintAt("  ", 4, lY);
-            UI_PrintAt(tmpStr, 8, lY);
-            UI_PrintAt("  ", 30, lY);
+            PrintAt("  ", 4, lY);
+            PrintAt(tmpStr, 8, lY);
+            PrintAt("  ", 30, lY);
         }
     }
 
-    sprintf(tmpStr, "%s %d", gMessages[eMSG_COMMON].mStrings[5], Dict_GetWordCount());
+    sprintf(tmpStr, "%s %d", gMessages[eMSG_COMMON].mStrings[5], GetWordCount());
     len = String_StrLen(tmpStr);
-    UI_PrintAt(tmpStr, 20-(len/2), 24);
+    PrintAt(tmpStr, 20-(len/2), 24);
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_DrawAlphabet
+ * FUNCTION : DrawAlphabet
  * ACTION   :  Rysuj alfabet z uzytymi literami
  *-----------------------------------------------------------------------------------*/
 
-static void UI_DrawAlphabet(void)
+static void DrawAlphabet(void)
 {
     U8 i;
     U8 lX, lY;
@@ -166,30 +171,30 @@ static void UI_DrawAlphabet(void)
         }
 
         if (i == gGame.mSelectedLetter) {
-            UI_PrintAt("[", lX - 1, lY);
-            UI_PrintAt(lStr, lX, lY);
-            UI_PrintAt("]", lX + 1, lY);
+            PrintAt("[", lX - 1, lY);
+            PrintAt(lStr, lX, lY);
+            PrintAt("]", lX + 1, lY);
         }
         else {
-            UI_PrintAt(" ", lX - 1, lY);
-            UI_PrintAt(lStr, lX, lY);
-            UI_PrintAt(" ", lX + 1, lY);
+            PrintAt(" ", lX - 1, lY);
+            PrintAt(lStr, lX, lY);
+            PrintAt(" ", lX + 1, lY);
         }
     }
 }
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_DrawAnswer
+ * FUNCTION : DrawAnswer
  * ACTION   : Rysuj haslo do odgadniecia
  *-----------------------------------------------------------------------------------*/
 
-static void UI_DrawAnswer(void)
+static void DrawAnswer(void)
 {
     U8 i;
     U8 lLen;
     U8 lStartX;
     char lStr[2] = { 0, 0 };
 
-    UI_PrintAt("HAS£O:", 2, ANSWER_Y);
+    PrintAt("HAS£O:", 2, ANSWER_Y);
 
     lLen = 0;
     while (gGame.mAnswer[lLen] != '\0') lLen++;
@@ -198,126 +203,126 @@ static void UI_DrawAnswer(void)
 
     for (i = 0; i < lLen; i++) {
         lStr[0] = gGame.mAnswer[i];
-        UI_PrintAt(lStr, lStartX + (i * 2), ANSWER_Y + 2);
+        PrintAt(lStr, lStartX + (i * 2), ANSWER_Y + 2);
     }
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_DrawHangman
+ * FUNCTION : DrawHangman
  * ACTION   :  Rysuj wisielca (tekstowo)
  *-----------------------------------------------------------------------------------*/
 
-static void UI_DrawHangman(void)
+static void DrawHangman(void)
 {
     U8 lMisses = gGame.mMisses;
     char lNum[4];
 
-    UI_PrintAt("B£ÊDÓW:", HANGMAN_X, HANGMAN_Y);
+    PrintAt("B£ÊDÓW:", HANGMAN_X, HANGMAN_Y);
 
     lNum[0] = '0' + (lMisses / 10);
     lNum[1] = '0' + (lMisses % 10);
     lNum[2] = '/';
     lNum[3] = '\0';
-    UI_PrintAt(lNum, HANGMAN_X + 8, HANGMAN_Y);
-    UI_PrintAt("12", HANGMAN_X + 11, HANGMAN_Y);
+    PrintAt(lNum, HANGMAN_X + 8, HANGMAN_Y);
+    PrintAt("12", HANGMAN_X + 11, HANGMAN_Y);
 
-    UI_PrintAt(" +---+  ", HANGMAN_X, HANGMAN_Y + 2);
-    UI_PrintAt(" |   |  ", HANGMAN_X, HANGMAN_Y + 3);
+    PrintAt(" +---+  ", HANGMAN_X, HANGMAN_Y + 2);
+    PrintAt(" |   |  ", HANGMAN_X, HANGMAN_Y + 3);
 
     if (lMisses >= 1) {
-        UI_PrintAt(" |   O  ", HANGMAN_X, HANGMAN_Y + 4);
+        PrintAt(" |   O  ", HANGMAN_X, HANGMAN_Y + 4);
     } else {
-        UI_PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 4);
+        PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 4);
     }
 
     if (lMisses >= 6) {
-        UI_PrintAt(" |  /|\\ ", HANGMAN_X, HANGMAN_Y + 5);
+        PrintAt(" |  /|\\ ", HANGMAN_X, HANGMAN_Y + 5);
     } else if (lMisses >= 5) {
-        UI_PrintAt(" |  /|  ", HANGMAN_X, HANGMAN_Y + 5);
+        PrintAt(" |  /|  ", HANGMAN_X, HANGMAN_Y + 5);
     } else if (lMisses >= 4) {
-        UI_PrintAt(" |   |  ", HANGMAN_X, HANGMAN_Y + 5);
+        PrintAt(" |   |  ", HANGMAN_X, HANGMAN_Y + 5);
     } else if (lMisses >= 3) {
-        UI_PrintAt(" |  \\|  ", HANGMAN_X, HANGMAN_Y + 5);
+        PrintAt(" |  \\|  ", HANGMAN_X, HANGMAN_Y + 5);
     } else if (lMisses >= 2) {
-        UI_PrintAt(" |  \\   ", HANGMAN_X, HANGMAN_Y + 5);
+        PrintAt(" |  \\   ", HANGMAN_X, HANGMAN_Y + 5);
     } else {
-        UI_PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 5);
+        PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 5);
     }
 
     if (lMisses >= 7) {
-        UI_PrintAt(" |   |  ", HANGMAN_X, HANGMAN_Y + 6);
+        PrintAt(" |   |  ", HANGMAN_X, HANGMAN_Y + 6);
     } else {
-        UI_PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 6);
+        PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 6);
     }
 
     if (lMisses >= 12) {
-        UI_PrintAt(" |  / \\ ", HANGMAN_X, HANGMAN_Y + 7);
+        PrintAt(" |  / \\ ", HANGMAN_X, HANGMAN_Y + 7);
     } else if (lMisses >= 11) {
-        UI_PrintAt(" |  /   ", HANGMAN_X, HANGMAN_Y + 7);
+        PrintAt(" |  /   ", HANGMAN_X, HANGMAN_Y + 7);
     } else if (lMisses >= 10) {
-        UI_PrintAt(" |    \\ ", HANGMAN_X, HANGMAN_Y + 7);
+        PrintAt(" |    \\ ", HANGMAN_X, HANGMAN_Y + 7);
     } else if (lMisses >= 9) {
-        UI_PrintAt(" |  |   ", HANGMAN_X, HANGMAN_Y + 7);
+        PrintAt(" |  |   ", HANGMAN_X, HANGMAN_Y + 7);
     } else if (lMisses >= 8) {
-        UI_PrintAt(" |    | ", HANGMAN_X, HANGMAN_Y + 7);
+        PrintAt(" |    | ", HANGMAN_X, HANGMAN_Y + 7);
     } else {
-        UI_PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 7);
+        PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 7);
     }
 
-    UI_PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 8);
-    UI_PrintAt("===     ", HANGMAN_X, HANGMAN_Y + 9);
+    PrintAt(" |      ", HANGMAN_X, HANGMAN_Y + 8);
+    PrintAt("===     ", HANGMAN_X, HANGMAN_Y + 9);
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_DrawGameContent
+ * FUNCTION : DrawGameContent
  * ACTION   : Rysuje zawarto¶æ ekranu gry (helper)
  *-----------------------------------------------------------------------------------*/
 
-void UI_DrawGameContent(const char* apText)
+void DrawGameContent(const char* apText)
 {
-    UI_ClearScreen();
-        UI_PrintAt("=== HANGMAN ===", 12, 0);
-        UI_DrawAlphabet();
-        UI_DrawAnswer();
-        UI_DrawHangman();
-    UI_DrawStatus(apText);
+    ClearScreen();
+        PrintAt("=== HANGMAN ===", 12, 0);
+        DrawAlphabet();
+        DrawAnswer();
+        DrawHangman();
+    DrawStatus(apText);
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_DrawGame
+ * FUNCTION : DrawGame
  * ACTION   : Rysuj caly ekran gry NA OBU BUFORACH
  *-----------------------------------------------------------------------------------*/
 
-void UI_DrawGame(const char* apText)
+void DrawGame(const char* apText)
 {
     // U8 i;
     
     /* Rysuj na obu buforach */
     // for (i = 0; i < 2; i++) {
-        UI_DrawGameContent(apText);
+        DrawGameContent(apText);
         Screen_Update();
-        UI_DrawGameContent(apText);
+        DrawGameContent(apText);
         Screen_Update();
     // }
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_UpdateCursor
+ * FUNCTION : UpdateCursor
  * ACTION   :  Aktualizuj tylko kursor NA OBU BUFORACH
  *-----------------------------------------------------------------------------------*/
 
-void UI_UpdateCursor(void)
+void UpdateCursor(void)
 {
-    UI_DrawAlphabet();
+    DrawAlphabet();
     Screen_Update();
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_ShowMessage
+ * FUNCTION : ShowMessage
  * ACTION   :  Pokaz wiadomosc NA OBU BUFORACH
  *-----------------------------------------------------------------------------------*/
 
-void UI_ShowMessage(const char* apMessage)
+void ShowMessage(const char* apMessage)
 {
     U8 i;
     U8 lLen;
@@ -329,51 +334,49 @@ void UI_ShowMessage(const char* apMessage)
     lX = (SCREEN_CHARS_X - lLen) / 2;
 
     for (i = 0; i < 2; i++) {
-        UI_PrintAt("                                        ", 0, MESSAGE_Y);
-        UI_PrintAt(apMessage, lX, MESSAGE_Y);
+        PrintAt("                                        ", 0, MESSAGE_Y);
+        PrintAt(apMessage, lX, MESSAGE_Y);
         Screen_Update();
     }
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : UI_ShowEndScreen
+ * FUNCTION : ShowEndScreen
  * ACTION   : Pokaz ekran konca gry
  *-----------------------------------------------------------------------------------*/
 
-void UI_ShowEndScreen(U8 aWin)
+void ShowEndScreen(U8 aWin)
 {
     U8 lLen;
     U8 lX;
     U8 rnd;
 
     if (aWin) {
-        // rnd = Random_GetClamped(gMessages[eMSG_WINS].mCount);
-        rnd = Random_GetClamped(4);
+        rnd = Random_GetClamped(gMessages[eMSG_WINS].mCount-1);
         lLen = String_StrLen(gMessages[eMSG_WINS].mStrings[rnd]);
-        lX = (40 - lLen) / 2;
-        UI_PrintAt("================================", 4, 8);
-        UI_PrintAt(gMessages[eMSG_WINS].mStrings[rnd], lX, 10);
-        UI_PrintAt("================================", 4, 12);
+        lX = (SCREEN_CHARS_X - lLen) / 2;
+        PrintAt("================================", 4, 8);
+        PrintAt(gMessages[eMSG_WINS].mStrings[rnd], lX, 10);
+        PrintAt("================================", 4, 12);
     }
     else {
-        // rnd = Random_GetClamped(gMessages[eMSG_LOOSES].mCount);
-        rnd = Random_GetClamped(4);
+        rnd = Random_GetClamped(gMessages[eMSG_LOOSES].mCount-1);
         lLen = String_StrLen(gMessages[eMSG_LOOSES].mStrings[rnd]);
-        lX = (40 - lLen) / 2;
-        UI_PrintAt("================================", 4, 8);
-        UI_PrintAt(gMessages[eMSG_LOOSES].mStrings[rnd], lX, 10);
-        UI_PrintAt("================================", 4, 12);
+        lX = (SCREEN_CHARS_X - lLen) / 2;
+        PrintAt("================================", 4, 8);
+        PrintAt(gMessages[eMSG_LOOSES].mStrings[rnd], lX, 10);
+        PrintAt("================================", 4, 12);
     }
     /* Oblicz ¶rodek dla has³a */
     lLen = String_StrLen(gGame.mAnswer);
-    lX = (40 - lLen) / 2;
+    lX = (SCREEN_CHARS_X - lLen) / 2;
 
-    UI_PrintAt("HAS£O TO:", 15, 14);
-    UI_PrintAt(gGame.mAnswer, lX, 16);
+    PrintAt("HAS£O TO:", 15, 14);
+    PrintAt(gGame.mAnswer, lX, 16);
 
-    // UI_DrawHangman();
+    // DrawHangman();
 
-    UI_PrintAt("NACI¦NIJ DOWOLNY KLAWISZ...", 6, 22);
+    PrintAt("NACI¦NIJ DOWOLNY KLAWISZ...", 6, 22);
 }
 
 /* ################################################################################ */

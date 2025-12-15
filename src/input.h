@@ -33,9 +33,9 @@ enum {
 
 void Input_Init(void);
 void Input_Update(void);
-U8   Input_GetMenu(void);
-U8   Input_GetGame(void);
-void Input_WaitForAny(void);
+U8   MenuInput(void);
+U8   GameInput(void);
+void WaitForAny(void);
 
 /* ################################################################################ */
 

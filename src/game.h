@@ -66,13 +66,13 @@ extern sGameState gGame;
 ################################################################################### */
 
 void Game_Init(void);
-void Game_InitRound(void);
-U8   Game_GuessLetter(void);
-void Game_MoveCursor(U8 aDirection);
-U8   Game_HasWon(void);
-U8   Game_HasLost(void);
-void Game_RevealAnswer(void);
-S8   Game_FindLetterIndex(char aChar);
+void InitRound(void);
+U8   GuessLetter(void);
+void MoveCursor(U8 aDirection);
+U8   HasWon(void);
+U8   HasLost(void);
+void RevealAnswer(void);
+S8   FindLetterIndex(char aChar);
 
 /* ################################################################################ */
 

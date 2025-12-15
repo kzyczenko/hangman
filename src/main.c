@@ -29,6 +29,12 @@
 #include "dict.h"
 
 /* ###################################################################################
+#  DEFINES
+################################################################################### */
+
+#define PROMPT_REFRESH 60000
+
+/* ###################################################################################
 #  PROTOTYPES
 ################################################################################### */
 
@@ -125,7 +131,7 @@ void App_Init(void)
     gApp.mCurrentLang = 0;
     gApp.mQuit = 0;
     gApp.mExitApp = 0;
-    Dict_SetLang(gApp.mCurrentLang);
+    SetLang(gApp.mCurrentLang);
 
     /* Inicjalizacja gry */
     Game_Init();
@@ -186,14 +192,14 @@ void TitleScreen_Run(void)
         Input_Update();
 
         if (lRedraw) {
-            UI_ClearScreen();
-            UI_DrawTitle();
-            UI_DrawMenu(lSelectedOption);
+            ClearScreen();
+            DrawTitle();
+            DrawMenu(lSelectedOption);
             lRedraw = 0;
             Screen_Update();
         }
 
-        lInput = Input_GetMenu();
+        lInput = MenuInput();
 
         switch (lInput)
         {
@@ -237,18 +243,18 @@ void TitleScreen_Run(void)
 
                     case 1: /* LEVEL */
                         lCurrentLevel ^= lvlTab[lSelectedLevel];
-                        Dict_SetLevel(lCurrentLevel);
+                        SetLevel(lCurrentLevel);
                         lRedraw = 1;
                         break;
 
                     case 2: /* WORD LENGTH */
                         lCurrentLevel ^= (U8)(toTab[lSelectedWordLen] << 4);
-                        Dict_SetLevel(lCurrentLevel);
+                        SetLevel(lCurrentLevel);
                         lRedraw = 1;
                         break;
 
                     case 3: /* LANGUAGE */
-                        Dict_SetLang(lSelectedLanguage);
+                        SetLang(lSelectedLanguage);
                         Game_Init();
                         lRedraw = 1;
                         break;
@@ -277,52 +283,54 @@ void GameScreen_Run(void)
     U8 lRedraw = 1;
     U8 lGameOver = 0;
     U8 lWin = 0;
+    U16 lPromptTimer = PROMPT_REFRESH;
+
     const char* message = gMessages[eMSG_PROMPT].mStrings[0];
 
     gApp.mCurrentScreen = eSCREEN_GAME;
 
     /* Nowa runda */
-    Game_InitRound();
-    UI_DrawGame(message);
+    InitRound();
+    DrawGame(message);
 
     while (!lGameOver && !gApp.mQuit) {
         IKBD_Update();
         Input_Update();
 
         if (lRedraw) {
-            UI_DrawGame(message);
+            DrawGame(message);
             lRedraw = 0;
         }
 
-        lInput = Input_GetGame();
+        lInput = GameInput();
 
         if (lInput == eINPUT_QUIT) {
             gApp.mQuit = 1;
         }
         else if (lInput == eINPUT_UP) {
-            Game_MoveCursor(eDIR_UP);
-            UI_UpdateCursor();
+            MoveCursor(eDIR_UP);
+            UpdateCursor();
         }
         else if (lInput == eINPUT_DOWN) {
-            Game_MoveCursor(eDIR_DOWN);
-            UI_UpdateCursor();
+            MoveCursor(eDIR_DOWN);
+            UpdateCursor();
         }
         else if (lInput == eINPUT_LEFT) {
-            Game_MoveCursor(eDIR_LEFT);
-            UI_UpdateCursor();
+            MoveCursor(eDIR_LEFT);
+            UpdateCursor();
         }
         else if (lInput == eINPUT_RIGHT) {
-            Game_MoveCursor(eDIR_RIGHT);
-            UI_UpdateCursor();
+            MoveCursor(eDIR_RIGHT);
+            UpdateCursor();
         }
         else if (lInput == eINPUT_FIRE) {
-            U8 lResult = Game_GuessLetter();
+            U8 lResult = GuessLetter();
             if (lResult == eGUESS_CORRECT) {
-                message = (gMessages[eMSG_CORRECT].mStrings[Random_GetClamped(gMessages[eMSG_CORRECT].mCount)]);
+                message = (gMessages[eMSG_CORRECT].mStrings[Random_GetClamped(gMessages[eMSG_CORRECT].mCount-1)]);
                 /* TODO: dzwiek */
             }
             else if (lResult == eGUESS_WRONG) {
-                message = (gMessages[eMSG_WRONG].mStrings[Random_GetClamped(gMessages[eMSG_WRONG].mCount)]);
+                message = (gMessages[eMSG_WRONG].mStrings[Random_GetClamped(gMessages[eMSG_WRONG].mCount-1)]);
                 /* TODO: dzwiek */
             }
             /* lResult == eGUESS_ALREADY_USED - nic nie rob */
@@ -330,43 +338,53 @@ void GameScreen_Run(void)
         }
         else if (lInput >= 'A' && lInput <= 'Z') {
             /* Bezposrednie wcisniecie litery */
-            S8 lLetterIndex = Game_FindLetterIndex((char)lInput);
+            S8 lLetterIndex = FindLetterIndex((char)lInput);
             if (lLetterIndex >= 0) {
                 gGame.mSelectedLetter = lLetterIndex;
-                U8 lResult = Game_GuessLetter();
+                U8 lResult = GuessLetter();
                 if (lResult == eGUESS_CORRECT) {
-                    message = (gMessages[eMSG_CORRECT].mStrings[Random_GetClamped(gMessages[eMSG_CORRECT].mCount)]);
+                    message = (gMessages[eMSG_CORRECT].mStrings[Random_GetClamped(gMessages[eMSG_CORRECT].mCount-1)]);
                 }
                 else if (lResult == eGUESS_WRONG) {
-                    message = (gMessages[eMSG_WRONG].mStrings[Random_GetClamped(gMessages[eMSG_WRONG].mCount)]);
+                    message = (gMessages[eMSG_WRONG].mStrings[Random_GetClamped(gMessages[eMSG_WRONG].mCount-1)]);
                 }
                 lRedraw = 1;
             }
         }
 
         /* Sprawdz koniec gry */
-        if (Game_HasWon()) {
+        if (HasWon()) {
             lGameOver = 1;
             lWin = 1;
         }
-        else if (Game_HasLost()) {
+        else if (HasLost()) {
             lGameOver = 1;
             lWin = 0;
+        }
+
+        /* Aktualizuj timer promptu */
+        if (lPromptTimer > 0) {
+            lPromptTimer--;
+        }
+        else {
+            message = gMessages[eMSG_PROMPT].mStrings[Random_GetClamped(gMessages[eMSG_PROMPT].mCount-2)+1];
+            lRedraw = 1;
+            lPromptTimer = PROMPT_REFRESH;
         }
     }
 
     /* Koniec rundy */
     if (lGameOver) {
-        UI_ClearScreen();
+        ClearScreen();
         if (lWin) {
-            UI_ShowEndScreen(1);
+            ShowEndScreen(1);
         }
         else {
-            Game_RevealAnswer();
-            UI_ShowEndScreen(0);
+            RevealAnswer();
+            ShowEndScreen(0);
         }
         Screen_Update();
-        Input_WaitForAny();
+        WaitForAny();
     }
 }
 

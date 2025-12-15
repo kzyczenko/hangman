@@ -107,27 +107,24 @@ void Dict_Init(void);
 void Dict_DeInit(void);
 
 /* Zarządzanie językami */
-U8   Dict_GetLangCount(void);
-const char* Dict_GetLangCode(U8 aIndex);
-void Dict_SetLang(U8 aIndex);
-U8   Dict_GetCurrentLang(void);
+U8   GetLangCount(void);
+const char* GetLangCode(U8 aIndex);
+void SetLang(U8 aIndex);
+U8   GetCurrentLang(void);
 
 /* Zarządzanie poziomami */
-void Dict_SetLevel(U8 aLevelMask);
-U8   Dict_GetLevel(void);
-U16  Dict_GetWordCount(void);  /* Liczba dostępnych słów dla aktualnych ustawień */
+void SetLevel(U8 aLevelMask);
+U8   GetLevel(void);
+U16  GetWordCount(void);  /* Liczba dostępnych słów dla aktualnych ustawień */
 
 /* Pobieranie słów */
-U8 Dict_LoadRandomBlock(void);
-void Dict_GetRandomWord(char* apBuffer);
-void Dict_GetWordAt(U16 aIndex, char* apBuffer);
+U8 LoadRandomBlock(void);
+void GetRandomWord(char* apBuffer);
+void GetWordAt(U16 aIndex, char* apBuffer);
 
 /* Pobieranie tekstów */
-const char* Dict_GetAlphabet(void);
-U8   Dict_GetAlphabetLen(void);
-const char* Dict_GetString(U8 aBlock, U8 aIndex);
-U8   Dict_GetStringCount(U8 aBlock);
-const char* Dict_GetRandomString(U8 aBlock);
+const char* GetAlphabet(void);
+U8   GetAlphabetLen(void);
 
 /* ################################################################################ */
 

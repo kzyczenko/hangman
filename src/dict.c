@@ -96,22 +96,22 @@ static S16 section_name_to_index(const char *name)
 ################################################################################### */
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION :  Dict_RandomRange
+ * FUNCTION :  RandomRange
  * ACTION   :  Losowa liczba z zakresu [0, aMax)
  *-----------------------------------------------------------------------------------*/
 
-static U16 Dict_RandomRange(U16 aMax)
+static U16 RandomRange(U16 aMax)
 {
     if (aMax == 0) return 0;
     return Random_GetClamped(aMax);
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_BuildLangPath
+ * FUNCTION : BuildLangPath
  * ACTION   : Buduje ścieżkę do pliku językowego
  *-----------------------------------------------------------------------------------*/
 
-static void Dict_BuildLangPath(const char* apFilename)
+static void BuildLangPath(const char* apFilename)
 {
     /* Format: "XX\FILENAME" gdzie XX to kod języka. */
     if (apFilename == NULL) apFilename = "";
@@ -122,11 +122,11 @@ static void Dict_BuildLangPath(const char* apFilename)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_BuildBlockPath
+ * FUNCTION : BuildBlockPath
  * ACTION   :  Buduje ścieżkę do bloku słów
  *-----------------------------------------------------------------------------------*/
 
-static void Dict_BuildBlockPath(U8 aLenType, U8 aLevel, U8 aBlockNum)
+static void BuildBlockPath(U8 aLenType, U8 aLevel, U8 aBlockNum)
 {
     /* Format: "XX\Bty.DAT" */
     sprintf(gPathBuffer, "%s\\B%d%d%d.DAT",
@@ -138,11 +138,11 @@ static void Dict_BuildBlockPath(U8 aLenType, U8 aLevel, U8 aBlockNum)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_LoadLangMap
+ * FUNCTION : LoadLangMap
  * ACTION   :  Ładuje mapę języków (oryginalny format Atari 8-bit)
  *-----------------------------------------------------------------------------------*/
 
-static void Dict_LoadLangMap(void)
+static void LoadLangMap(void)
 {
     U8* lpData;
     U8* lpPtr;
@@ -184,7 +184,7 @@ static void Dict_LoadLangMap(void)
     File_UnLoad(lpData);
 }
 
-void Dict_SetAlphabet(const char *alphabet)
+void SetAlphabet(const char *alphabet)
 {
     U8 len = String_StrLen(alphabet);
     if (len > DICT_MAX_ALPHABET_LEN) {
@@ -204,7 +204,7 @@ S16 ParseMessagesFile()
     int alph_lines_read = 0;
     S32 fsize;
 
-    Dict_BuildLangPath(LANG_INI_FILE);
+    BuildLangPath(LANG_INI_FILE);
 
     /* pobierz rozmiar pliku */
     fsize = File_GetSize(gPathBuffer);
@@ -319,10 +319,10 @@ void Dict_Init(void)
     }
     
     /* Załaduj mapę języków */
-    Dict_LoadLangMap();
+    LoadLangMap();
     
     /* Załaduj pierwszy język */
-    Dict_SetLang(0);
+    SetLang(0);
 }
 
 /*-----------------------------------------------------------------------------------*
@@ -339,21 +339,21 @@ void Dict_DeInit(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetLangCount
+ * FUNCTION : GetLangCount
  * ACTION   :  Zwraca liczbę dostępnych języków
  *-----------------------------------------------------------------------------------*/
 
-U8 Dict_GetLangCount(void)
+U8 GetLangCount(void)
 {
     return gDict.mLangCount;
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetLangCode
+ * FUNCTION : GetLangCode
  * ACTION   :  Zwraca kod języka
  *-----------------------------------------------------------------------------------*/
 
-const char* Dict_GetLangCode(U8 aIndex)
+const char* GetLangCode(U8 aIndex)
 {
     if (aIndex >= gDict.mLangCount) {
         return "??";
@@ -362,11 +362,11 @@ const char* Dict_GetLangCode(U8 aIndex)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_SetLang
+ * FUNCTION : SetLang
  * ACTION   :  Ustawia aktywny język
  *-----------------------------------------------------------------------------------*/
 
-void Dict_SetLang(U8 aIndex)
+void SetLang(U8 aIndex)
 {
     if (aIndex >= gDict.mLangCount) {
         aIndex = 0;
@@ -385,41 +385,41 @@ void Dict_SetLang(U8 aIndex)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetCurrentLang
+ * FUNCTION : GetCurrentLang
  * ACTION   :  Zwraca indeks aktualnego języka
  *-----------------------------------------------------------------------------------*/
 
-U8 Dict_GetCurrentLang(void)
+U8 GetCurrentLang(void)
 {
     return gApp.mCurrentLang;
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_SetLevel
+ * FUNCTION : SetLevel
  * ACTION   : Ustawia poziom trudności
  *-----------------------------------------------------------------------------------*/
 
-void Dict_SetLevel(U8 aLevelMask)
+void SetLevel(U8 aLevelMask)
 {
     gApp.mCurrentLevel = aLevelMask;
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetLevel
+ * FUNCTION : GetLevel
  * ACTION   : Zwraca maskę poziomu
  *-----------------------------------------------------------------------------------*/
 
-U8 Dict_GetLevel(void)
+U8 GetLevel(void)
 {
     return gApp.mCurrentLevel;
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetWordCount
+ * FUNCTION : GetWordCount
  * ACTION   :  Zwraca liczbę dostępnych słów dla aktualnych ustawień
  *-----------------------------------------------------------------------------------*/
 
-U16 Dict_GetWordCount(void)
+U16 GetWordCount(void)
 {
     U16 lCount = 0;
     U8 lLevel = gApp.mCurrentLevel;
@@ -448,11 +448,11 @@ U16 Dict_GetWordCount(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_LoadRandomBlock
+ * FUNCTION : LoadRandomBlock
  * ACTION   : Ładuje losowy blok słów zgodny z aktualnymi ustawieniami
  *-----------------------------------------------------------------------------------*/
 
-U8 Dict_LoadRandomBlock(void)
+U8 LoadRandomBlock(void)
 {
     U8 lLevel = gApp.mCurrentLevel;
     sLangInfo* lpLang = &gDict.mLangs[gApp.mCurrentLang];
@@ -491,7 +491,7 @@ U8 Dict_LoadRandomBlock(void)
     }
     
     /* Wybierz losowy blok */
-    lSelectedBlock = (U8)Dict_RandomRange(lTotalBlocks);
+    lSelectedBlock = (U8)RandomRange(lTotalBlocks);
     
     /* Znajdź wybrany blok - TO7 */
     if ((lLevel>>4 & TO7) && !lFound) {
@@ -530,7 +530,7 @@ U8 Dict_LoadRandomBlock(void)
     }
     
     /* Zbuduj ścieżkę i załaduj */
-    Dict_BuildBlockPath(currentWordLen, lLvl, lBlockNum);
+    BuildBlockPath(currentWordLen, lLvl, lBlockNum);
     gDict.mpWordBlock = File_Load(gPathBuffer);
     
     if (gDict.mpWordBlock) {
@@ -547,11 +547,11 @@ U8 Dict_LoadRandomBlock(void)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetWordAt
+ * FUNCTION : GetWordAt
  * ACTION   : Pobiera słowo z aktualnego bloku
  *-----------------------------------------------------------------------------------*/
 
-void Dict_GetWordAt(U16 aIndex, char* apBuffer)
+void GetWordAt(U16 aIndex, char* apBuffer)
 {
     U8* lpWord;
     U8 lLen;
@@ -572,17 +572,17 @@ void Dict_GetWordAt(U16 aIndex, char* apBuffer)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetRandomWord
+ * FUNCTION : GetRandomWord
  * ACTION   :  Pobiera losowe słowo
  *-----------------------------------------------------------------------------------*/
 
-void Dict_GetRandomWord(char* apBuffer)
+void GetRandomWord(char* apBuffer)
 {
     U16 lIndex;
 
     /* Załaduj blok jeśli nie ma */
     if (!gDict.mpWordBlock) {
-        Dict_LoadRandomBlock();
+        LoadRandomBlock();
     }
 
     if (!gDict.mpWordBlock || gDict.mWordCount == 0) {
@@ -591,26 +591,26 @@ void Dict_GetRandomWord(char* apBuffer)
         return;
     }
 
-    lIndex = Dict_RandomRange(gDict.mWordCount);
-    Dict_GetWordAt(lIndex, apBuffer);
+    lIndex = RandomRange(gDict.mWordCount);
+    GetWordAt(lIndex, apBuffer);
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetAlphabet
+ * FUNCTION : GetAlphabet
  * ACTION   :  Zwraca alfabet
  *-----------------------------------------------------------------------------------*/
 
-const char* Dict_GetAlphabet(void)
+const char* GetAlphabet(void)
 {
     return gDict.mAlphabet;
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : Dict_GetAlphabetLen
+ * FUNCTION : GetAlphabetLen
  * ACTION   : Zwraca długość alfabetu
  *-----------------------------------------------------------------------------------*/
 
-U8 Dict_GetAlphabetLen(void)
+U8 GetAlphabetLen(void)
 {
     return gDict.mAlphabetLen;
 }
