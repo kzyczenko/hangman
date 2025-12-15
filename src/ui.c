@@ -10,6 +10,7 @@
 #include "ui.h"
 #include "game.h"
 #include "dict.h"
+#include "lang.h"
 #include <godlib/font8x8/font8x8.h>
 #include <godlib/random/random.h>
 #include <godlib/screen/screen.h>
@@ -84,6 +85,7 @@ void DrawStatus(const char* apText)
 
 void DrawTitle(void)
 {
+    PrintAt(DEBUG, 0, 0);
     PrintAt("================================", 4, 2);
     PrintAt("         H A N G M A N          ", 4, 4);
     PrintAt("         ATARI ST PORT          ", 4, 6);
@@ -108,27 +110,27 @@ void DrawMenu(U8 aSelectedOption)
 
         switch(i) {
             case 0:
-                String_StrCpy(tmpStr, gMessages[eMSG_COMMON].mStrings[0]); /* START GAME */
+                String_StrCpy(tmpStr, GetText(GRP_MENU, i)); /* START GAME */
                 break;
             case 1:
                 if (gApp.mCurrentLevel & lvlTab[lSelectedLevel]) {
-                    sprintf(tmpStr, "%s %d *", gMessages[eMSG_COMMON].mStrings[1], lSelectedLevel + 1); /* LEVEL */
+                    sprintf(tmpStr, "%s %d *", GetText(GRP_MENU, STR_MENU_LEVEL), lSelectedLevel + 1); /* LEVEL */
                 } else {
-                    sprintf(tmpStr, "%s %d", gMessages[eMSG_COMMON].mStrings[1], lSelectedLevel + 1); /* LEVEL */
+                    sprintf(tmpStr, "%s %d", GetText(GRP_MENU, STR_MENU_LEVEL), lSelectedLevel + 1); /* LEVEL */
                 }
                 break;
             case 2:
             if (gApp.mCurrentLevel & (toTab[lSelectedWordLen] << 4)) {
-                    sprintf(tmpStr, "%s %s *", gMessages[eMSG_COMMON].mStrings[2], lSelectedWordLen ? "13" : "7"); /* WORDS LENGTH */
+                    sprintf(tmpStr, "%s %s *", GetText(GRP_MENU, STR_MENU_WORDS_LENGTH), lSelectedWordLen ? "13" : "7"); /* WORDS LENGTH */
                 } else {
-                    sprintf(tmpStr, "%s %s", gMessages[eMSG_COMMON].mStrings[2], lSelectedWordLen ? "13" : "7"); /* WORDS LENGTH */
+                    sprintf(tmpStr, "%s %s", GetText(GRP_MENU, STR_MENU_WORDS_LENGTH), lSelectedWordLen ? "13" : "7"); /* WORDS LENGTH */
                 }
                 break;
             case 3:
-                sprintf(tmpStr, "%s (%s)", gMessages[eMSG_COMMON].mStrings[3], gDict.mLangs[lSelectedLanguage].mCode); /* LANGUAGE */
+                sprintf(tmpStr, "%s (%s)", GetText(GRP_MENU, STR_MENU_LANGUAGE), gDict.mLangs[lSelectedLanguage].mCode); /* LANGUAGE */
                 break;
             case 4:
-                String_StrCpy(tmpStr, gMessages[eMSG_COMMON].mStrings[4]); /* QUIT */
+                String_StrCpy(tmpStr, GetText(GRP_MENU, STR_MENU_QUIT)); /* QUIT */
                 break;
         }
 
@@ -144,7 +146,7 @@ void DrawMenu(U8 aSelectedOption)
         }
     }
 
-    sprintf(tmpStr, "%s %d", gMessages[eMSG_COMMON].mStrings[5], GetWordCount());
+    sprintf(tmpStr, "%s %d", GetText(GRP_COMMON, STR_COMMON_DICT_SIZE), GetWordCount());
     len = String_StrLen(tmpStr);
     PrintAt(tmpStr, 20-(len/2), 24);
 }
@@ -275,16 +277,16 @@ static void DrawHangman(void)
 
 /*-----------------------------------------------------------------------------------*
  * FUNCTION : DrawGameContent
- * ACTION   : Rysuje zawarto¶æ ekranu gry (helper)
+ * ACTION   : Rysuje zawartosc ekranu gry (helper)
  *-----------------------------------------------------------------------------------*/
 
 void DrawGameContent(const char* apText)
 {
     ClearScreen();
-        PrintAt("=== HANGMAN ===", 12, 0);
-        DrawAlphabet();
-        DrawAnswer();
-        DrawHangman();
+    PrintAt("=== HANGMAN ===", 12, 0);
+    DrawAlphabet();
+    DrawAnswer();
+    DrawHangman();
     DrawStatus(apText);
 }
 
@@ -295,15 +297,10 @@ void DrawGameContent(const char* apText)
 
 void DrawGame(const char* apText)
 {
-    // U8 i;
-    
-    /* Rysuj na obu buforach */
-    // for (i = 0; i < 2; i++) {
-        DrawGameContent(apText);
-        Screen_Update();
-        DrawGameContent(apText);
-        Screen_Update();
-    // }
+    DrawGameContent(apText);
+    Screen_Update();
+    DrawGameContent(apText);
+    Screen_Update();
 }
 
 /*-----------------------------------------------------------------------------------*
@@ -328,7 +325,7 @@ void ShowMessage(const char* apMessage)
     U8 lLen;
     U8 lX;
 
-    /* Oblicz d³ugo¶æ */
+    /* Oblicz dlugosc */
     lLen = 0;
     while (apMessage[lLen] != '\0') lLen++;
     lX = (SCREEN_CHARS_X - lLen) / 2;
@@ -349,25 +346,25 @@ void ShowEndScreen(U8 aWin)
 {
     U8 lLen;
     U8 lX;
-    U8 rnd;
+    char* gTemp;
 
     if (aWin) {
-        rnd = Random_GetClamped(gMessages[eMSG_WINS].mCount-1);
-        lLen = String_StrLen(gMessages[eMSG_WINS].mStrings[rnd]);
+        gTemp = GetRandomText(GRP_WINS);
+        lLen = String_StrLen(gTemp);
         lX = (SCREEN_CHARS_X - lLen) / 2;
         PrintAt("================================", 4, 8);
-        PrintAt(gMessages[eMSG_WINS].mStrings[rnd], lX, 10);
+        PrintAt(gTemp, lX, 10);
         PrintAt("================================", 4, 12);
     }
     else {
-        rnd = Random_GetClamped(gMessages[eMSG_LOOSES].mCount-1);
-        lLen = String_StrLen(gMessages[eMSG_LOOSES].mStrings[rnd]);
+        gTemp = GetRandomText(GRP_LOOSES);
+        lLen = String_StrLen(gTemp);
         lX = (SCREEN_CHARS_X - lLen) / 2;
         PrintAt("================================", 4, 8);
-        PrintAt(gMessages[eMSG_LOOSES].mStrings[rnd], lX, 10);
+        PrintAt(gTemp, lX, 10);
         PrintAt("================================", 4, 12);
     }
-    /* Oblicz ¶rodek dla has³a */
+    /* Oblicz srodek dla hasla */
     lLen = String_StrLen(gGame.mAnswer);
     lX = (SCREEN_CHARS_X - lLen) / 2;
 

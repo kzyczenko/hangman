@@ -18,7 +18,7 @@
 
 #define LANG_INI_FILE       "LANG.INI"
 #define LANG_MAP_FILE       "LANG.MAP"
-
+#define LANG_DAT_FILE       "LANG.DAT"
 
 #define MSG_MAX_STRINGS        10
 #define MSG_MAX_STRING_LEN     40
@@ -41,18 +41,6 @@
 #define TO7    0x01    /* słowa 3-7 znaków */
 #define TO13   0x02    /* słowa 8-13 znaków */
 
-/* Indeksy bloków tekstowych */
-enum {
-    eMSG_COMMON = 0,
-    eMSG_PROMPT,
-    eMSG_CORRECT,
-    eMSG_WRONG,
-    eMSG_WINS,
-    eMSG_LOOSES,
-    
-    eMSG_COUNT
-};
-
 /* ###################################################################################
 #  STRUCTS
 ################################################################################### */
@@ -62,13 +50,6 @@ typedef struct sLangInfo {
     char mCode[3];              /* Kod języka:  "PL", "EN", etc. */
     U8   mBlockCount[2][4];     /* Liczba bloków [TO7/TO13][LVL1-4] */
 } sLangInfo;
-
-/* Blok tekstów (np. msg_prompt) */
-typedef struct sTextBlock {
-    U8   mCount;                                    /* Liczba stringów */
-    U8   mLengths[MSG_MAX_STRINGS];                /* Długości stringów */
-    char mStrings[MSG_MAX_STRINGS][MSG_MAX_STRING_LEN]; /* Same stringi */
-} sTextBlock;
 
 /* Załadowany słownik */
 typedef struct sDictionary {
@@ -87,17 +68,28 @@ typedef struct sDictionary {
     U16         mWordCount;         /* Liczba słów w bloku */
 } sDictionary;
 
+typedef struct sTextGroup {
+    U16         mCount; // Ile stringów w grupie
+    char        **mStrings;       // Tablica wskaźników do stringów
+} sTextGroup;
+
+typedef struct sTextBlob {
+    U16         mSize; // Ile stringów w grupie
+    U8          mData[1];       // Tablica wskaźników do stringów
+} sTextBlob;
+
 /* ###################################################################################
 #  GLOBALS
 ################################################################################### */
 
-extern sTextBlock gMessages[eMSG_COUNT];
+extern sTextGroup *gGroupsTable;
+extern char *gTextBlob;
 extern sDictionary gDict;
 extern char gPathBuffer[32];
 extern U8 lTotalBlocks;
 extern const U8 lvlTab[4];
 extern const U8 toTab[2];
-
+extern char DEBUG[64];
 /* ###################################################################################
 #  PROTOTYPES
 ################################################################################### */
@@ -125,6 +117,9 @@ void GetWordAt(U16 aIndex, char* apBuffer);
 /* Pobieranie tekstów */
 const char* GetAlphabet(void);
 U8   GetAlphabetLen(void);
+
+char* GetText(U16 aGroupId, U16 aStringIdx);
+char* GetRandomText(U16 aGroupId);
 
 /* ################################################################################ */
 

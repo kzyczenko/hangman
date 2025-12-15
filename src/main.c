@@ -27,12 +27,13 @@
 #include "input.h"
 #include "ui.h"
 #include "dict.h"
+#include "lang.h"
 
 /* ###################################################################################
 #  DEFINES
 ################################################################################### */
 
-#define PROMPT_REFRESH 60000
+#define PROMPT_REFRESH 600
 
 /* ###################################################################################
 #  PROTOTYPES
@@ -190,6 +191,7 @@ void TitleScreen_Run(void)
     while (1) {
         IKBD_Update();
         Input_Update();
+        Vbl_WaitVbl();
 
         if (lRedraw) {
             ClearScreen();
@@ -285,7 +287,7 @@ void GameScreen_Run(void)
     U8 lWin = 0;
     U16 lPromptTimer = PROMPT_REFRESH;
 
-    char* message = gMessages[eMSG_PROMPT].mStrings[0];
+    char* message = GetText(GRP_PROMPT, STR_PROMPT_DEFAULT);
 
     gApp.mCurrentScreen = eSCREEN_GAME;
 
@@ -296,6 +298,7 @@ void GameScreen_Run(void)
     while (!lGameOver && !gApp.mQuit) {
         IKBD_Update();
         Input_Update();
+        Vbl_WaitVbl();
 
         lInput = GameInput();
 
@@ -326,11 +329,11 @@ void GameScreen_Run(void)
         else if (lInput == eINPUT_FIRE) {
             U8 lResult = GuessLetter();
             if (lResult == eGUESS_CORRECT) {
-                message = (gMessages[eMSG_CORRECT].mStrings[Random_GetClamped(gMessages[eMSG_CORRECT].mCount-1)]);
+                message = GetRandomText(GRP_CORRECT);
                 /* TODO: dzwiek */
             }
             else if (lResult == eGUESS_WRONG) {
-                message = (gMessages[eMSG_WRONG].mStrings[Random_GetClamped(gMessages[eMSG_WRONG].mCount-1)]);
+                message = GetRandomText(GRP_WRONG);
                 /* TODO: dzwiek */
             }
             /* lResult == eGUESS_ALREADY_USED - nic nie rob */
@@ -343,10 +346,10 @@ void GameScreen_Run(void)
                 gGame.mSelectedLetter = lLetterIndex;
                 U8 lResult = GuessLetter();
                 if (lResult == eGUESS_CORRECT) {
-                    message = (gMessages[eMSG_CORRECT].mStrings[Random_GetClamped(gMessages[eMSG_CORRECT].mCount-1)]);
+                    message = GetRandomText(GRP_CORRECT);
                 }
                 else if (lResult == eGUESS_WRONG) {
-                    message = (gMessages[eMSG_WRONG].mStrings[Random_GetClamped(gMessages[eMSG_WRONG].mCount-1)]);
+                    message = GetRandomText(GRP_WRONG);
                 }
                 lRedraw = 1;
             }
@@ -367,7 +370,7 @@ void GameScreen_Run(void)
             lPromptTimer--;
         }
         else {
-            message = gMessages[eMSG_PROMPT].mStrings[Random_GetClamped(gMessages[eMSG_PROMPT].mCount-2)+1];
+            message = GetRandomText(GRP_PROMPT);
             lRedraw = 1;
             lPromptTimer = PROMPT_REFRESH;
         }

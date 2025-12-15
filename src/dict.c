@@ -9,6 +9,7 @@
 
 #include "dict.h"
 #include "ui.h"
+#include "lang.h"
 #include <godlib/file/file.h>
 #include <godlib/memory/memory.h>
 #include <godlib/string/string.h>
@@ -21,75 +22,23 @@
 ################################################################################### */
 
 sDictionary gDict;
-sTextBlock gMessages[eMSG_COUNT];
 U8 lTotalBlocks = 0;
+
+sTextGroup *gGroupsTable = NULL; // Tablica struktur grup
+char *gTextBlob = NULL;         // Surowe dane
+U16 lNumGroups = 0;
 
 const U8 lvlTab[4] = { LVL1, LVL2, LVL3, LVL4 };
 const U8 toTab[2]  = { TO7, TO13 };
 static U8 currentWordLen;
 /* Bufory na ścieżki plików */
 char gPathBuffer[32];
+char DEBUG[64];
 
 /* ###################################################################################
 #  HELPERS
 ################################################################################### */
 
-static void trim_inplace(char *s)
-{
-    if (!s) return;
-    /* trim right */
-    char *end = s + String_StrLen(s);
-    while (end > s && (U8)end[-1] <= ' ') end--;
-    *end = '\0';
-    /* trim left */
-    char *p = s;
-    while (*p && (U8)*p <= ' ') p++;
-    if (p != s) Memory_Copy(String_StrLen(p) + 1, p, s);
-}
-
-static S16 is_comment_or_empty(const char *s)
-{
-    if (!s) return 1;
-    const char *p = s;
-    while (*p && (U8)*p <= ' ') p++;
-    if (*p == '\0') return 1;
-    if (*p == ';' || *p == '#') return 1;
-    return 0;
-}
-
-static void add_string_to_block(sTextBlock *blk, const char *line)
-{
-    if (!blk || !line) return;
-    if (blk->mCount >= (U8)MSG_MAX_STRINGS) return;
-    U8 len = String_StrLen(line);
-    if (len >= MSG_MAX_STRING_LEN) len = MSG_MAX_STRING_LEN - 1;
-    U8 idx = blk->mCount;
-    Memory_Copy(len, line, blk->mStrings[idx]);
-    blk->mStrings[idx][len] = '\0';
-    blk->mLengths[idx] = (U8)len;
-    blk->mCount++;
-}
-
-/* Nazwy sekcji — kolejność odpowiada enumowi eMSG_* */
-static const char *block_names[] = {
-    [0] = "msg_common",
-    [1] = "msg_prompt",
-    [2] = "msg_correct",
-    [3] = "msg_wrong",
-    [4] = "msg_wins",
-    [5] = "msg_looses"
-};
-
-#define BLOCK_COUNT (sizeof(block_names)/sizeof(block_names[0]))
-
-static S16 section_name_to_index(const char *name)
-{
-    if (!name) return -1;
-    for (int i = 0; i < (S16)BLOCK_COUNT; ++i) {
-        if (String_StrCmp(name, block_names[i]) == 0) return i;
-    }
-    return -1;
-}
 
 /* ###################################################################################
 #  PRIVATE FUNCTIONS
@@ -165,7 +114,7 @@ static void LoadLangMap(void)
     /* Bajty 1-(langCount*2): Kody języków */
     for (i = 0; i < gDict.mLangCount; i++) {
         gDict.mLangs[i].mCode[0] = *lpPtr++;
-        gDict. mLangs[i].mCode[1] = *lpPtr++;
+        gDict.mLangs[i].mCode[1] = *lpPtr++;
         gDict.mLangs[i].mCode[2] = '\0';
     }
     
@@ -184,7 +133,7 @@ static void LoadLangMap(void)
     File_UnLoad(lpData);
 }
 
-void SetAlphabet(const char *alphabet)
+static void SetAlphabet(const char *alphabet)
 {
     U8 len = String_StrLen(alphabet);
     if (len > DICT_MAX_ALPHABET_LEN) {
@@ -197,93 +146,64 @@ void SetAlphabet(const char *alphabet)
 
 /* --- Parser pliku --- */
 /* Zwraca 1 = OK, 0 = błąd (np. nie otwarto pliku) */
-S16 ParseMessagesFile()
+static S16 LoadLangDat()
 {
-    char *p, *buf;
-    int current_block = -1;      /* >=0 -> index do gMessages; -2 -> alphabets; -1 -> ignore */
-    int alph_lines_read = 0;
-    S32 fsize;
+    sFileHandle lHandle;
+    U32 lFilesize;
+    U16 i, j;
+    char *ptr;
 
-    BuildLangPath(LANG_INI_FILE);
-
-    /* pobierz rozmiar pliku */
-    fsize = File_GetSize(gPathBuffer);
-    if (fsize <= 0) return 0;
-
-    /* zaalokuj bufor + 1 na terminator */
-    buf = (char*)mMEMALLOC((size_t)fsize + 1);
-    if (!buf) return 0;
-
-    /* wczytaj do buf (File_LoadAt zwraca non-zero przy sukcesie) */
-    if (!File_LoadAt(gPathBuffer, buf)) {
-        mMEMFREE(buf);
-        return 0;
-    }
-    /* upewnij się, że jest terminator */
-    buf[fsize] = '\0';
-
-    /* Wyzeruj bloki wiadomości przed wczytaniem */
-    for (int i = 0; i < (S16)BLOCK_COUNT; ++i) {
-        gMessages[i].mCount = 0;
-        Memory_Clear(sizeof(gMessages[i].mStrings), gMessages[i].mStrings);
-    }
-
-    /* Parsowanie: iterujemy po liniach w buforze */
-    p = buf;
-
-    while (*p) {
-        /* znajdź koniec linii */
-        char *nl = strchr(p, '\n');
-        if (nl) {
-            *nl = '\0';
-            /* usun CR jeśli jest */
-            size_t L = String_StrLen(p);
-            if (L > 0 && p[L-1] == '\r') p[L-1] = '\0';
+    BuildLangPath(LANG_DAT_FILE);
+    // Sprzątanie poprzedniego języka
+    if (gGroupsTable) { 
+        // Zwalniamy tablice wskaźników dla każdej grupy
+        for(i=0; i<lNumGroups; i++) {
+            if(gGroupsTable[i].mStrings) mMEMFREE(gGroupsTable[i].mStrings);
         }
+        mMEMFREE(gGroupsTable); 
+        gGroupsTable = NULL; 
+    }
+    if (gTextBlob) { mMEMFREE(gTextBlob); gTextBlob = NULL; }
 
-        trim_inplace(p);
-        if (!is_comment_or_empty(p)) {
-            if (p[0] == '[') {
-                char *end = strchr(p, ']');
-                if (end) {
-                    *end = '\0';
-                    char *secname = p + 1;
-                    trim_inplace(secname);
-                    if (String_StrCmp(secname, "alphabets") == 0) {
-                        current_block = -2;
-                        alph_lines_read = 0;
-                    } else {
-                        int idx = section_name_to_index(secname);
-                        if (idx >= 0) current_block = idx;
-                        else current_block = -1;
-                    }
-                } else {
-                    current_block = -1;
-                }
-            } else {
-                /* linia z danymi */
-                if (current_block == -2) {
-                    if (alph_lines_read == 0) {
-                        Memory_Copy(String_StrLen(p), p, gDict.mAlphabet);
-                        gDict.mAlphabet[String_StrLen(p)] = '\0';
-                        gDict.mAlphabetLen = (U8)String_StrLen(p);
-                        alph_lines_read++;
-                    } else {
-                        /* ignoruj dodatkowe linie alphabets */
-                    }
-                } else if (current_block >= 0) {
-                    add_string_to_block(&gMessages[current_block], p);
-                } else {
-                    /* ignoruj */
-                }
-            }
-        }
+    
+    lHandle = File_Open(gPathBuffer);
+    if (lHandle<0) return 0;
 
-        if (!nl) break;
-        p = nl + 1;
+    // 1. Czytamy ilość grup
+    File_Read(lHandle, 2, &lNumGroups);
+    // 2. Alokujemy tabelę grup
+    gGroupsTable = (sTextGroup*)mMEMALLOC(lNumGroups * sizeof(sTextGroup));
+    
+    // 3. Wczytujemy liczniki dla każdej grupy
+    for(i=0; i<lNumGroups; i++) {
+        U16 lCount;
+        File_Read(lHandle, 2, &lCount);
+        gGroupsTable[i].mCount = lCount;
+        // Alokujemy od razu tablicę wskaźników dla tej grupy
+        gGroupsTable[i].mStrings = (char**)mMEMALLOC(lCount * sizeof(char*));
     }
 
-    mMEMFREE(buf);
+    // 4. Reszta pliku to tekst - wczytujemy do bloba
+    U32 cur_pos = File_SeekFromCurrent(lHandle, 0);
+    File_SeekFromEnd(lHandle, 0);
+    lFilesize = File_SeekFromCurrent(lHandle, 0) - cur_pos;
+    File_SeekFromStart(lHandle, cur_pos);
+
+    gTextBlob = (char*)mMEMALLOC(lFilesize);
+    File_Read(lHandle, lFilesize, gTextBlob);
+    File_Close(lHandle);
+
+    // 5. POINTER FIXUP (Wiązanie wskaźników)
+    ptr = gTextBlob;
+    for(i=0; i<lNumGroups; i++) {
+        for(j=0; j<gGroupsTable[i].mCount; j++) {
+            gGroupsTable[i].mStrings[j] = ptr; // Przypisz adres
+            // Przesuń ptr za koniec stringa
+            while(*ptr++); 
+        }
+    }
+
+    SetAlphabet(GetText(GRP_ALPHABETS, STR_ALPHABETS_UP));
     return 1;
 }
 
@@ -381,7 +301,7 @@ void SetLang(U8 aIndex)
     }
     
     /* Załaduj dane językowe */
-    ParseMessagesFile();
+    LoadLangDat();
 }
 
 /*-----------------------------------------------------------------------------------*
@@ -615,4 +535,20 @@ U8 GetAlphabetLen(void)
     return gDict.mAlphabetLen;
 }
 
+/* Funkcja pobierająca konkretny tekst */
+char* GetText(U16 aGroupId, U16 aStringIdx) {
+    if (aGroupId >= lNumGroups) return "ERR_GRP";
+    if (aStringIdx >= gGroupsTable[aGroupId].mCount) return "ERR_IDX";
+    
+    return gGroupsTable[aGroupId].mStrings[aStringIdx];
+}
+
+/* Funkcja losująca tekst z grupy (dla 'Nie ta', 'Pudło' etc.) */
+char* GetRandomText(U16 aGroupId) {
+    if (aGroupId >= lNumGroups) return "ERR_GRP";
+    int count = gGroupsTable[aGroupId].mCount;
+    if (count == 0) return "";
+    
+    return gGroupsTable[aGroupId].mStrings[Random_GetClamped(count-1)];
+}
 /* ################################################################################ */
