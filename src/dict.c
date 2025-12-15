@@ -28,11 +28,6 @@ sTextGroup *gGroupsTable = NULL; // Tablica struktur grup
 char *gTextBlob = NULL;         // Surowe dane
 U16 lNumGroups = 0;
 
-const U8 lvlTab[4] = { LVL1, LVL2, LVL3, LVL4 };
-const U8 toTab[2]  = { TO7, TO13 };
-static U8 currentWordLen;
-/* Bufory na ścieżki plików */
-char gPathBuffer[32];
 char DEBUG[64];
 
 /* ###################################################################################
@@ -56,37 +51,6 @@ static U16 RandomRange(U16 aMax)
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : BuildLangPath
- * ACTION   : Buduje ścieżkę do pliku językowego
- *-----------------------------------------------------------------------------------*/
-
-static void BuildLangPath(const char* apFilename)
-{
-    /* Format: "XX\FILENAME" gdzie XX to kod języka. */
-    if (apFilename == NULL) apFilename = "";
-
-    sprintf(gPathBuffer, "%s\\%.24s",
-             gDict.mLangs[gApp.mCurrentLang].mCode,
-             apFilename);
-}
-
-/*-----------------------------------------------------------------------------------*
- * FUNCTION : BuildBlockPath
- * ACTION   :  Buduje ścieżkę do bloku słów
- *-----------------------------------------------------------------------------------*/
-
-static void BuildBlockPath(U8 aLenType, U8 aLevel, U8 aBlockNum)
-{
-    /* Format: "XX\Bty.DAT" */
-    sprintf(gPathBuffer, "%s\\B%d%d%d.DAT",
-        gDict.mLangs[gApp.mCurrentLang].mCode,
-        aLenType,
-        lvlTab[aLevel & 3],
-        aBlockNum
-    );
-}
-
-/*-----------------------------------------------------------------------------------*
  * FUNCTION : LoadLangMap
  * ACTION   :  Ładuje mapę języków (oryginalny format Atari 8-bit)
  *-----------------------------------------------------------------------------------*/
@@ -95,7 +59,7 @@ static void LoadLangMap(void)
 {
     U8* lpData;
     U8* lpPtr;
-    U8 i, j;
+    U8 i;
     
     lpData = File_Load(LANG_MAP_FILE);
     
@@ -117,19 +81,7 @@ static void LoadLangMap(void)
         gDict.mLangs[i].mCode[1] = *lpPtr++;
         gDict.mLangs[i].mCode[2] = '\0';
     }
-    
-    /* Po kodach:  tablice bloków (8 bajtów na język) */
-    for (i = 0; i < gDict.mLangCount; i++) {
-        /* TO7 (słowa 3-7 znaków) */
-        for (j = 0; j < 4; j++) {
-            gDict.mLangs[i].mBlockCount[0][j] = *lpPtr++;
-        }
-        /* TO13 (słowa 8-13 znaków) */
-        for (j = 0; j < 4; j++) {
-            gDict.mLangs[i].mBlockCount[1][j] = *lpPtr++;
-        }
-    }
-    
+        
     File_UnLoad(lpData);
 }
 
@@ -151,9 +103,9 @@ static S16 LoadLangDat()
     sFileHandle lHandle;
     U32 lFilesize;
     U16 i, j;
+    char lFilename[16];
     char *ptr;
 
-    BuildLangPath(LANG_DAT_FILE);
     // Sprzątanie poprzedniego języka
     if (gGroupsTable) { 
         // Zwalniamy tablice wskaźników dla każdej grupy
@@ -165,8 +117,9 @@ static S16 LoadLangDat()
     }
     if (gTextBlob) { mMEMFREE(gTextBlob); gTextBlob = NULL; }
 
-    
-    lHandle = File_Open(gPathBuffer);
+    sprintf(lFilename, "%s\\%.24s", gDict.mLangs[gApp.mCurrentLang].mCode, LANG_DAT_FILE);    
+
+    lHandle = File_Open(lFilename);
     if (lHandle<0) return 0;
 
     // 1. Czytamy ilość grup
@@ -218,24 +171,21 @@ static S16 LoadLangDat()
 
 void Dict_Init(void)
 {
-    U8 i, j, k;
+    U8 i;
         
     /* Wyzeruj strukturę ręcznie */
     gDict.mLangCount = 0;
     gDict.mAlphabetLen = 0;
     gDict.mAlphabet[0] = '\0';
     gDict.mpWordBlock = 0;
+    gDict.mpWordIndex = 0;
     gDict.mWordBlockSize = 0;
-    gDict.mWordSize = 0;
     gDict.mWordCount = 0;
     
     for (i = 0; i < DICT_MAX_LANGS; i++) {
         gDict.mLangs[i].mCode[0] = '\0';
-        for (j = 0; j < 2; j++) {
-            for (k = 0; k < 4; k++) {
-                gDict.mLangs[i].mBlockCount[j][k] = 0;
-            }
-        }
+        gDict.mLangs[i].mCode[1] = '\0';
+        gDict.mLangs[i].mCode[2] = '\0';
     }
     
     /* Załaduj mapę języków */
@@ -340,155 +290,41 @@ U8 GetLevel(void)
  *-----------------------------------------------------------------------------------*/
 
 U16 GetWordCount(void)
-{
-    U16 lCount = 0;
-    U8 lLevel = gApp.mCurrentLevel;
-    sLangInfo* lpLang = &gDict.mLangs[gApp.mCurrentLang];
-    U8 i;
-    
-    /* Słowa krótkie (TO7) */
-    if (lLevel>>4 & TO7) {
-        for (i = 0; i < 4; i++) {
-            if (lLevel & (1 << i)) {
-                lCount += lpLang->mBlockCount[0][i] << 9;
-            }
-        }
-    }
-    
-    /* Słowa długie (TO13) */
-    if (lLevel>>4 & TO13) {
-        for (i = 0; i < 4; i++) {
-            if (lLevel & (1 << i)) {
-                lCount += lpLang->mBlockCount[1][i] << 9;
-            }
-        }
-    }
-    
-    return lCount;
+{    
+    return gDict.mWordCount;
 }
 
 /*-----------------------------------------------------------------------------------*
- * FUNCTION : LoadRandomBlock
+ * FUNCTION : LoadDictionary
  * ACTION   : Ładuje losowy blok słów zgodny z aktualnymi ustawieniami
  *-----------------------------------------------------------------------------------*/
 
-U8 LoadRandomBlock(void)
-{
-    U8 lLevel = gApp.mCurrentLevel;
-    sLangInfo* lpLang = &gDict.mLangs[gApp.mCurrentLang];
-    U8 lLvl = 0;
-    U8 lBlockNum = 0;
-    U8 lSelectedBlock;
-    U8 i;
-    U8 lCount;
-    U8 lFound = 0;
-    
-    /* Zwolnij stary blok */
-    if (gDict.mpWordBlock) {
-        File_UnLoad(gDict.mpWordBlock);
-        gDict.mpWordBlock = 0;
-    }
-    
-    /* Policz dostępne bloki */
-    if (lLevel>>4 & TO7) {
-        for (i = 0; i < 4; i++) {
-            if (lLevel & (1 << i)) {
-                lTotalBlocks += lpLang->mBlockCount[0][i];
-            }
-        }
-    }
-    
-    if (lLevel>>4 & TO13) {
-        for (i = 0; i < 4; i++) {
-            if (lLevel & (1 << i)) {
-                lTotalBlocks += lpLang->mBlockCount[1][i];
-            }
-        }
-    }
-    
-    if (lTotalBlocks == 0) {
-        return 0;
-    }
-    
-    /* Wybierz losowy blok */
-    lSelectedBlock = (U8)RandomRange(lTotalBlocks);
-    
-    /* Znajdź wybrany blok - TO7 */
-    if ((lLevel>>4 & TO7) && !lFound) {
-        for (i = 0; i < 4 && !lFound; i++) {
-            if (lLevel & (1 << i)) {
-                lCount = lpLang->mBlockCount[0][i];
-                if (lSelectedBlock < lCount) {
-                    currentWordLen = TO7;
-                    lLvl = i;
-                    lBlockNum = lSelectedBlock;
-                    lFound = 1;
-                }
-                else {
-                    lSelectedBlock -= lCount;
-                }
-            }
-        }
-    }
-    
-    /* Znajdź wybrany blok - TO13 */
-    if ((lLevel>>4 & TO13) && !lFound) {
-        for (i = 0; i < 4 && !lFound; i++) {
-            if (lLevel & (1 << i)) {
-                lCount = lpLang->mBlockCount[1][i];
-                if (lSelectedBlock < lCount) {
-                    currentWordLen = TO13;
-                    lLvl = i;
-                    lBlockNum = lSelectedBlock;
-                    lFound = 1;
-                }
-                else {
-                    lSelectedBlock -= lCount;
-                }
-            }
-        }
-    }
-    
-    /* Zbuduj ścieżkę i załaduj */
-    BuildBlockPath(currentWordLen, lLvl, lBlockNum);
-    gDict.mpWordBlock = File_Load(gPathBuffer);
-    
-    if (gDict.mpWordBlock) {
-        if (currentWordLen == TO7) {
-            gDict.mWordBlockSize = DICT_BLOCK_SIZE_SHORT;
-            gDict.mWordSize = DICT_WORD_SIZE_SHORT;
-        } else {
-            gDict.mWordBlockSize = DICT_BLOCK_SIZE_LONG;
-            gDict.mWordSize = DICT_WORD_SIZE_LONG;
-        }
-        gDict.mWordCount = gDict.mWordBlockSize / gDict.mWordSize;
-    }
-    return lBlockNum;
-}
+U8 LoadDictionary(void) {
+    char gFilename[16];
+    sFileHandle lHandle;
+    U32 lDataLen;
 
-/*-----------------------------------------------------------------------------------*
- * FUNCTION : GetWordAt
- * ACTION   : Pobiera słowo z aktualnego bloku
- *-----------------------------------------------------------------------------------*/
+    sprintf(gFilename, "%s\\LEVEL%d.DAT", gDict.mLangs[gApp.mCurrentLang].mCode, gApp.mCurrentLevel+1);
+    lHandle = File_Open(gFilename);
+    if(lHandle < 0) return 0;
 
-void GetWordAt(U16 aIndex, char* apBuffer)
-{
-    U8* lpWord;
-    U8 lLen;
-    U8 i;
+    lDataLen = File_GetSize(gFilename) - sizeof(U16);
+ 
+    File_Read(lHandle, sizeof(U16), &gDict.mWordCount);
 
-    if (! gDict.mpWordBlock || aIndex >= gDict.mWordCount) {
-        apBuffer[0] = '\0';
-        return;
+    gDict.mpWordBlock = mMEMALLOC(lDataLen);
+    File_Read(lHandle, lDataLen, gDict.mpWordBlock);
+    File_Close(lHandle);
+
+    gDict.mpWordIndex = mMEMALLOC(gDict.mWordCount * sizeof(char*));
+    
+    char *ptr = gDict.mpWordBlock;
+    for(int i=0; i<gDict.mWordCount; i++) {
+        gDict.mpWordIndex[i] = ptr;
+        while(*ptr++); 
     }
-
-    lpWord = gDict.mpWordBlock + (aIndex * gDict.mWordSize);
-    lLen = lpWord[0];
-
-    for (i = 0; i < lLen; i++) {
-        apBuffer[i] = lpWord[1 + i];
-    }
-    apBuffer[lLen] = '\0';
+    
+    return 1;
 }
 
 /*-----------------------------------------------------------------------------------*
@@ -502,7 +338,7 @@ void GetRandomWord(char* apBuffer)
 
     /* Załaduj blok jeśli nie ma */
     if (!gDict.mpWordBlock) {
-        LoadRandomBlock();
+        LoadDictionary();
     }
 
     if (!gDict.mpWordBlock || gDict.mWordCount == 0) {
@@ -512,7 +348,7 @@ void GetRandomWord(char* apBuffer)
     }
 
     lIndex = RandomRange(gDict.mWordCount);
-    GetWordAt(lIndex, apBuffer);
+    String_StrCpy(apBuffer, gDict.mpWordIndex[lIndex]);
 }
 
 /*-----------------------------------------------------------------------------------*

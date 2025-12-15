@@ -128,7 +128,7 @@ void App_Init(void)
 
     /* Stan poczatkowy */
     gApp.mCurrentScreen = eSCREEN_TITLE;
-    gApp.mCurrentLevel = LVLALL; /* wszystkie poziomy */
+    gApp.mCurrentLevel = 0; /* wszystkie poziomy */
     gApp.mCurrentLang = 0;
     gApp.mQuit = 0;
     gApp.mExitApp = 0;
@@ -179,7 +179,6 @@ void Game_Loop(void)
 void TitleScreen_Run(void)
 {
     U8 lSelectedOption = 0;
-    U8 lCurrentLevel = gApp.mCurrentLevel;
     U8 lInput;
     U8 lRedraw = 1;
 
@@ -220,20 +219,27 @@ void TitleScreen_Run(void)
                 break;
 
             case eINPUT_LEFT:
+                if (lSelectedOption == 1) { /* LEVEL */
+                    lSelectedLevel = (lSelectedLevel - 1) % 3;
+                    if (lSelectedLevel > 2) {
+                        lSelectedLevel = 2;
+                    }
+                    lRedraw = 1;
+                }
+                else if (lSelectedOption == 2) { /* LANGUAGE */
+                    lSelectedLanguage =
+                        (lSelectedLanguage - 1) & (gDict.mLangCount - 1);
+                    lRedraw = 1;
+                }
+                break;
             case eINPUT_RIGHT:
                 if (lSelectedOption == 1) { /* LEVEL */
-                    lSelectedLevel =
-                        (lSelectedLevel + 1) % 4;
+                    lSelectedLevel = (lSelectedLevel + 1) % 3;
                     lRedraw = 1;
                 }
-                else if (lSelectedOption == 2) { /* WORD LENGTH */
-                    lSelectedWordLen =
-                        (lSelectedWordLen + 1) % 2;
-                    lRedraw = 1;
-                }
-                else if (lSelectedOption == 3) { /* LANGUAGE */
+                else if (lSelectedOption == 2) { /* LANGUAGE */
                     lSelectedLanguage =
-                        (lSelectedLanguage + 1) & (DICT_MAX_LANGS - 1);
+                        (lSelectedLanguage + 1) & (gDict.mLangCount - 1);
                     lRedraw = 1;
                 }
                 break;
@@ -244,24 +250,18 @@ void TitleScreen_Run(void)
                         return;
 
                     case 1: /* LEVEL */
-                        lCurrentLevel ^= lvlTab[lSelectedLevel];
-                        SetLevel(lCurrentLevel);
+                        SetLevel(lSelectedLevel);
+                        Game_Init();
                         lRedraw = 1;
                         break;
 
-                    case 2: /* WORD LENGTH */
-                        lCurrentLevel ^= (U8)(toTab[lSelectedWordLen] << 4);
-                        SetLevel(lCurrentLevel);
-                        lRedraw = 1;
-                        break;
-
-                    case 3: /* LANGUAGE */
+                    case 2: /* LANGUAGE */
                         SetLang(lSelectedLanguage);
                         Game_Init();
                         lRedraw = 1;
                         break;
 
-                    case 4: /* QUIT */
+                    case 3: /* QUIT */
                         gApp.mExitApp = 1;
                         return;
                 }

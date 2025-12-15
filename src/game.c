@@ -43,6 +43,7 @@ void Game_Init(void)
     /* Oblicz rozmiar planszy (zaokrąglony do pełnych wierszy) */
     U8 lRows = (gGame.mAlphabetLen + gGame.mAlphabetCols - 1) / gGame.mAlphabetCols;
     gGame.mBoardSize = lRows * gGame.mAlphabetCols;
+    LoadDictionary();
 }
 
 /*-----------------------------------------------------------------------------------*
@@ -66,7 +67,6 @@ void InitRound(void)
     }
     
     /* Załaduj nowy blok słów i pobierz losowe słowo */
-    LoadRandomBlock();
     GetRandomWord(gGame.mSecret);
     
     /* Przygotuj odpowiedź (same podkreślniki) */

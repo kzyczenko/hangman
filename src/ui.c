@@ -103,9 +103,8 @@ void DrawMenu(U8 aSelectedOption)
     char tmpStr[50];
     extern U8 lSelectedLanguage;
     extern U8 lSelectedLevel;
-    extern U8 lSelectedWordLen;
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 4; i++) {
         U8 lY = 12 + (i * 2);
 
         switch(i) {
@@ -113,23 +112,12 @@ void DrawMenu(U8 aSelectedOption)
                 String_StrCpy(tmpStr, GetText(GRP_MENU, i)); /* START GAME */
                 break;
             case 1:
-                if (gApp.mCurrentLevel & lvlTab[lSelectedLevel]) {
-                    sprintf(tmpStr, "%s %d *", GetText(GRP_MENU, STR_MENU_LEVEL), lSelectedLevel + 1); /* LEVEL */
-                } else {
-                    sprintf(tmpStr, "%s %d", GetText(GRP_MENU, STR_MENU_LEVEL), lSelectedLevel + 1); /* LEVEL */
-                }
+                sprintf(tmpStr, "%s: %s", GetText(GRP_MENU, STR_MENU_LEVEL), GetText(GRP_LEVELS, lSelectedLevel)); /* LEVEL */
                 break;
             case 2:
-            if (gApp.mCurrentLevel & (toTab[lSelectedWordLen] << 4)) {
-                    sprintf(tmpStr, "%s %s *", GetText(GRP_MENU, STR_MENU_WORDS_LENGTH), lSelectedWordLen ? "13" : "7"); /* WORDS LENGTH */
-                } else {
-                    sprintf(tmpStr, "%s %s", GetText(GRP_MENU, STR_MENU_WORDS_LENGTH), lSelectedWordLen ? "13" : "7"); /* WORDS LENGTH */
-                }
-                break;
-            case 3:
                 sprintf(tmpStr, "%s (%s)", GetText(GRP_MENU, STR_MENU_LANGUAGE), gDict.mLangs[lSelectedLanguage].mCode); /* LANGUAGE */
                 break;
-            case 4:
+            case 3:
                 String_StrCpy(tmpStr, GetText(GRP_MENU, STR_MENU_QUIT)); /* QUIT */
                 break;
         }
@@ -137,12 +125,12 @@ void DrawMenu(U8 aSelectedOption)
         if (i == aSelectedOption) {
             PrintAt(">>", 5, lY);
             PrintAt(tmpStr, 8, lY);
-            PrintAt("<<", 30, lY);
+            PrintAt("<<", 33, lY);
         }
         else {
             PrintAt("  ", 4, lY);
             PrintAt(tmpStr, 8, lY);
-            PrintAt("  ", 30, lY);
+            PrintAt("  ", 33, lY);
         }
     }
 
@@ -196,7 +184,7 @@ static void DrawAnswer(void)
     U8 lStartX;
     char lStr[2] = { 0, 0 };
 
-    PrintAt("HAS£O:", 2, ANSWER_Y);
+    PrintAt(GetText(GRP_COMMON, STR_COMMON_SECRET), 2, ANSWER_Y);
 
     lLen = 0;
     while (gGame.mAnswer[lLen] != '\0') lLen++;
@@ -219,7 +207,7 @@ static void DrawHangman(void)
     U8 lMisses = gGame.mMisses;
     char lNum[4];
 
-    PrintAt("B£ÊDÓW:", HANGMAN_X, HANGMAN_Y);
+    PrintAt(GetText(GRP_COMMON, STR_COMMON_ERRORS), HANGMAN_X, HANGMAN_Y);
 
     lNum[0] = '0' + (lMisses / 10);
     lNum[1] = '0' + (lMisses % 10);
@@ -365,15 +353,17 @@ void ShowEndScreen(U8 aWin)
         PrintAt("================================", 4, 12);
     }
     /* Oblicz srodek dla hasla */
+    lLen = String_StrLen(GetText(GRP_COMMON, STR_COMMON_GUESSED));
+    lX = (SCREEN_CHARS_X - lLen) / 2;
+    PrintAt(GetText(GRP_COMMON, STR_COMMON_GUESSED), lX, 14);
+
     lLen = String_StrLen(gGame.mAnswer);
     lX = (SCREEN_CHARS_X - lLen) / 2;
-
-    PrintAt("HAS£O TO:", 15, 14);
     PrintAt(gGame.mAnswer, lX, 16);
 
     // DrawHangman();
 
-    PrintAt("NACI¦NIJ DOWOLNY KLAWISZ...", 6, 22);
+    PrintAt(GetText(GRP_COMMON, STR_COMMON_PRESS_ANY), 6, 22);
 }
 
 /* ################################################################################ */

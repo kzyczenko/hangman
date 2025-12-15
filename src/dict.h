@@ -16,30 +16,11 @@
 #  DEFINES
 ################################################################################### */
 
-#define LANG_INI_FILE       "LANG.INI"
 #define LANG_MAP_FILE       "LANG.MAP"
 #define LANG_DAT_FILE       "LANG.DAT"
 
-#define MSG_MAX_STRINGS        10
-#define MSG_MAX_STRING_LEN     40
-
 #define DICT_MAX_LANGS          2
 #define DICT_MAX_ALPHABET_LEN   64
-#define DICT_BLOCK_SIZE_SHORT   0x1000  /* 4KB - słowa 3-7 znaków */
-#define DICT_BLOCK_SIZE_LONG    0x2000  /* 8KB - słowa 8-13 znaków */
-#define DICT_WORD_SIZE_SHORT    8
-#define DICT_WORD_SIZE_LONG     16
-
-/* Poziomy trudności (bitmaski) */
-#define LVL1   0x01
-#define LVL2   0x02
-#define LVL3   0x04
-#define LVL4   0x08
-#define LVLALL 0x3F
-
-/* Długość słów (bitmaski) */
-#define TO7    0x01    /* słowa 3-7 znaków */
-#define TO13   0x02    /* słowa 8-13 znaków */
 
 /* ###################################################################################
 #  STRUCTS
@@ -48,7 +29,6 @@
 /* Informacje o dostępnym języku */
 typedef struct sLangInfo {
     char mCode[3];              /* Kod języka:  "PL", "EN", etc. */
-    U8   mBlockCount[2][4];     /* Liczba bloków [TO7/TO13][LVL1-4] */
 } sLangInfo;
 
 /* Załadowany słownik */
@@ -60,11 +40,11 @@ typedef struct sDictionary {
     /* Alfabet (duże litery) */
     char        mAlphabet[DICT_MAX_ALPHABET_LEN + 1];
     U8          mAlphabetLen;
-        
+
     /* Aktualny blok słów */
-    U8*         mpWordBlock;        /* Załadowany blok */
+    char*       mpWordBlock;        /* Załadowany blok */
+    char**      mpWordIndex;        /* Indeksy słów w bloku */
     U16         mWordBlockSize;     /* Rozmiar bloku */
-    U8          mWordSize;          /* Rozmiar pojedynczego słowa (8 lub 16) */
     U16         mWordCount;         /* Liczba słów w bloku */
 } sDictionary;
 
@@ -90,6 +70,7 @@ extern U8 lTotalBlocks;
 extern const U8 lvlTab[4];
 extern const U8 toTab[2];
 extern char DEBUG[64];
+
 /* ###################################################################################
 #  PROTOTYPES
 ################################################################################### */
@@ -110,7 +91,7 @@ U8   GetLevel(void);
 U16  GetWordCount(void);  /* Liczba dostępnych słów dla aktualnych ustawień */
 
 /* Pobieranie słów */
-U8 LoadRandomBlock(void);
+U8 LoadDictionary(void);
 void GetRandomWord(char* apBuffer);
 void GetWordAt(U16 aIndex, char* apBuffer);
 
